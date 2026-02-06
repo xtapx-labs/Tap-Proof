@@ -4,32 +4,30 @@
 
 ---
 
-## The Problem No One's Solved Properly
+## The Problem: Security Theater at Scale
 
-The counterfeit economy isn't just a $500B problem—it's a massive failure of technology.
+The counterfeit economy is a **$500B+** problem that runs almost unchecked.
 
-Today, the platforms promising "authentication"—the resale marketplaces, the brand protection agencies, the verification services—are lying to you. They rely on "experts" smelling glue and squinting at stitching patterns.
+Today, platforms that promise “authentication” (resale marketplaces, brand protection agencies, verification services) still rely heavily on **human inspectors** reading stitching patterns, materials, and other physical tells.
 
-When they do use tech, it’s a joke:
+When technology is used, it often fails at basic security:
 
-The "Green Tag" Lie: The biggest sneaker marketplaces use a simple plastic disc with a QR code. A QR code is a static image. Photograph it. Reprint it. Congratulations, you just "authenticated" a fake.
+### 1) The “Green Tag” Gap
+Major marketplaces often use **plastic tags with QR codes**.
 
-The "Smart Tag" Lie: 90% of brands using NFC are using Static Chips (NTAG 213). These emit the same URL every time. A counterfeiter can clone this in 3 seconds using a $5 blank tag and a smartphone.
+A QR code is a **static image**. If someone can photograph it, they can reprint it.  
+It authenticates the **link**, not the **object**.
 
-We are fighting a digital war with analog weapons.
+### 2) The Static NFC Limit
+Many brands deploying NFC today use **static chips** 
 
-The Solution: Cryptography, Not Stitching.
-The technology to make cloning mathematically impossible already exists. It’s called Dynamic Authentication (NTAG 424 DNA).
+Static NFC emits the **same data every scan**, which means a counterfeiter can **clone it quickly** with a standard smartphone and a blank tag.
 
-Old Way: Tag shouts "I am Real" (Static Password). Hackable.
+**We are fighting a digital problem with analog tools.**
 
-TapProof Way: Tag generates a unique, encrypted 128-bit signature every single time it is tapped.
+The actual technology to make counterfeiting mathematically impossible at scale exists. It's been sitting there. What doesn't exist is a platform that makes it usable outside of six-figure enterprise contracts and 18-month integrations.
 
-If you copy the link? It fails. If you clone the tag? It fails. If you replay an old scan? It fails.
-
-This technology has been gatekept behind six-figure enterprise contracts and "Supply Chain Consultants" for too long. TapProof is the battering ram. We are bringing bank-grade cryptographic verification to everyone—from the independent artist to the global brand—without the enterprise bloat.
-
-Stop selling stickers. Start selling truth.
+That's TapProof.
 
 ---
 
