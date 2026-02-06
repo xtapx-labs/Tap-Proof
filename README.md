@@ -105,7 +105,7 @@ The verification layer, the provisioning pipeline, and the ownership engine are 
 🔨  Pre-Alpha  —  Active Development
 ```
 
-Core verification engine and provisioning pipeline in progress. Targeting a working demo with live tap-to-verify by april-2026.
+Core verification engine and provisioning pipeline in progress. Targeting a working demo with live tap-to-verify by March 2026.
 
 ---
 
