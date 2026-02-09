@@ -5,6 +5,9 @@
 ---
 
 ## The Problem: Security Theater at Scale
+<br>
+<sub> </sub>
+
 
 The counterfeit economy is a **$500B+** problem that runs almost unchecked.
 
@@ -118,7 +121,7 @@ The verification layer, the provisioning pipeline, and the ownership engine are 
 🔨  Pre-Alpha  —  Active Development
 ```
 
-Core verification engine and provisioning pipeline in progress. Targeting a working demo with live tap-to-verify by March 2026.
+Currently in pre-coding stage, focusing on architecture and resource dependencies. Targeting a working demo with live tap-to-verify by March 2026.
 
 ---
 
