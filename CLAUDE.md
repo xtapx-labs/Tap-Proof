@@ -1,6 +1,6 @@
 # XtapX — CLAUDE.md
 
-Cryptographic NFC verification system built for **CalgaryHacks 2026**. Combats physical misinformation by leveraging NTAG 424 DNA hardware to generate mathematically verifiable proofs of authenticity on every tap.
+Cryptographic NFC verification system built for. Combats physical misinformation by leveraging NTAG 424 DNA hardware to generate mathematically verifiable proofs of authenticity on every tap.
 
 ---
 
