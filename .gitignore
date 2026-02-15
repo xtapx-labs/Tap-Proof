@@ -3,3 +3,4 @@ node_modules/
 xtapx.db
 *.log
 .DS_Store
+.env

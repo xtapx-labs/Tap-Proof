@@ -4,13 +4,14 @@
 // POST /api/register — Register a new tag + product
 // POST /api/simulate-scan — Generate a simulated NFC scan (demo)
 // ─────────────────────────────────────────────
-const express  = require('express');
-const router   = express.Router();
-const supabase = require('../db');
+const express   = require('express');
+const router    = express.Router();
+const supabase  = require('../db');
+const adminAuth = require('../middleware/adminAuth');
 const { generateTagKeys, encryptKeyForStorage, simulateTagScan } = require('../crypto');
 
 // ── Register a new product tag ──────────────
-router.post('/register', async (req, res) => {
+router.post('/register', adminAuth, async (req, res) => {
   try {
     const { uid, product_name, product_brand, product_image, product_sku, registered_by } = req.body;
 
@@ -82,7 +83,7 @@ router.post('/register', async (req, res) => {
 });
 
 // ── Simulate a tag scan (for demo purposes) ─
-router.post('/simulate-scan', async (req, res) => {
+router.post('/simulate-scan', adminAuth, async (req, res) => {
   try {
     const { uid } = req.body;
 
@@ -130,7 +131,7 @@ router.post('/simulate-scan', async (req, res) => {
 });
 
 // ── List all registered tags ────────────────
-router.get('/tags', async (_req, res) => {
+router.get('/tags', adminAuth, async (_req, res) => {
   try {
     const { data, error } = await supabase
       .from('tags')

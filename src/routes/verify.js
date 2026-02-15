@@ -11,6 +11,7 @@ const router   = express.Router();
 const supabase = require('../db');
 const { decryptPICCData, verifyCMAC, decryptKeyFromStorage } = require('../crypto');
 const { generateAnomalyReport } = require('../anomaly');
+const { maskEmail } = require('../utils/privacy');
 
 router.get('/', async (req, res) => {
   const { d: encryptedHex, m: cmacHex } = req.query;
@@ -249,9 +250,9 @@ router.get('/api', async (req, res) => {
       }).eq('uid', matchedTag.uid);
     }
 
-    // Build provenance chain
+    // Build provenance chain (emails masked for privacy)
     const provenance = (ownership || []).map(o => ({
-      owner:   o.owner_email,
+      owner:   maskEmail(o.owner_email),
       action:  o.transfer_type === 'initial_claim' ? 'claimed' : 'transferred',
       date:    o.claimed_at,
       counter: o.counter_at_claim,
@@ -278,7 +279,7 @@ router.get('/api', async (req, res) => {
       scan_number:    newTotalScans,
       counter:        decryptedData.counter,
       last_counter:   matchedTag.last_counter,
-      current_owner:  matchedTag.current_owner,
+      current_owner:  maskEmail(matchedTag.current_owner),
       provenance,
       anomaly:        anomalyReport,
       first_registered: matchedTag.registered_at,
@@ -320,7 +321,7 @@ router.get('/lookup/:uid', async (req, res) => {
       .order('claimed_at', { ascending: true });
 
     const provenance = (ownership || []).map(o => ({
-      owner:   o.owner_email,
+      owner:   maskEmail(o.owner_email),
       action:  o.transfer_type === 'initial_claim' ? 'claimed' : 'transferred',
       date:    o.claimed_at,
       counter: o.counter_at_claim,
@@ -342,7 +343,7 @@ router.get('/lookup/:uid', async (req, res) => {
       },
       total_scans:     tag.total_scans,
       last_counter:    tag.last_counter,
-      current_owner:   tag.current_owner,
+      current_owner:   maskEmail(tag.current_owner),
       registered_at:   tag.registered_at,
       status:          tag.status,
       provenance,

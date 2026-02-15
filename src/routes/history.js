@@ -6,6 +6,7 @@
 const express  = require('express');
 const router   = express.Router();
 const supabase = require('../db');
+const { maskEmail, stripIP } = require('../utils/privacy');
 
 router.get('/history/:uid', async (req, res) => {
   try {
@@ -55,7 +56,7 @@ router.get('/history/:uid', async (req, res) => {
     for (const owner of (owners || [])) {
       provenance.push({
         type:    owner.transfer_type === 'initial_claim' ? 'claimed' : 'transferred',
-        actor:   owner.owner_email,
+        actor:   maskEmail(owner.owner_email),
         date:    owner.claimed_at,
         counter: owner.counter_at_claim,
       });
@@ -63,7 +64,7 @@ router.get('/history/:uid', async (req, res) => {
       if (owner.released_at) {
         provenance.push({
           type:    'released',
-          actor:   owner.owner_email,
+          actor:   maskEmail(owner.owner_email),
           date:    owner.released_at,
           counter: owner.counter_at_claim,
         });
@@ -87,7 +88,7 @@ router.get('/history/:uid', async (req, res) => {
       },
       uid:           tag.uid,
       status:        tag.status,
-      current_owner: tag.current_owner,
+      current_owner: maskEmail(tag.current_owner),
       registered_at: tag.registered_at,
       registered_by: tag.registered_by,
       total_scans:   tag.total_scans,
@@ -104,7 +105,6 @@ router.get('/history/:uid', async (req, res) => {
         result:   s.result,
         reason:   s.result_reason,
         time:     s.scanned_at,
-        ip:       s.ip_address,
       })),
     });
 

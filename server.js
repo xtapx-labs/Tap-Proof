@@ -27,13 +27,13 @@ app.use('/api',      claimRoutes);
 app.use('/api',      transferRoutes);
 app.use('/api',      historyRoutes);
 
-// ── SPA fallback for frontend pages ─────────
-app.get('/scan',     (_req, res) => res.sendFile(path.join(__dirname, 'public', 'verify.html')));
-app.get('/history',  (_req, res) => res.sendFile(path.join(__dirname, 'public', 'history.html')));
-app.get('/register', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'register.html')));
-
 // ── Health check ────────────────────────────
 app.get('/api/health', (_req, res) => res.json({ status: 'ok', service: 'XtapX', time: new Date().toISOString() }));
+
+// ── SPA fallback — serve index.html for all non-API routes ──
+app.get('*', (_req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 // ── Start ───────────────────────────────────
 app.listen(PORT, () => {
