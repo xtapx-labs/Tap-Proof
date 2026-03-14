@@ -2,13 +2,13 @@
 // XtapX Demo Seed Script
 // ─────────────────────────────────────────────
 // Seeds the database with demo products for
-// the CalgaryHacks 2026 live demo.
+// the live demo.
 //
 // Usage: npm run seed
 // ─────────────────────────────────────────────
 require('dotenv').config();
 const { createClient } = require('@supabase/supabase-js');
-const { generateTagKeys, encryptKeyForStorage, simulateTagScan } = require('../src/crypto');
+const { generateTagKeys, encryptKeyForStorage, simulateTagScan } = require('../server/crypto');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,

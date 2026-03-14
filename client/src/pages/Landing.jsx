@@ -44,7 +44,7 @@ export default function Landing() {
             className="inline-block px-4 py-1.5 rounded-full bg-truth-green/5 border border-truth-green/20 mb-6"
           >
             <span className="text-truth-green text-xs font-mono tracking-[0.2em] uppercase">
-              CalgaryHacks 2026 · Topic 1
+              Topic 1
             </span>
           </motion.div>
 
@@ -208,7 +208,7 @@ export default function Landing() {
       {/* ── FOOTER ───────────────────────── */}
       <footer className="border-t border-vault-border/50 py-8 text-center">
         <p className="text-zinc-600 text-xs font-mono">
-          <span className="text-zinc-400 font-bold">XtapX Labs</span> · CalgaryHacks 2026 · Combating Physical Misinformation
+          <span className="text-zinc-400 font-bold">XtapX Labs</span> · Combating Physical Misinformation
         </p>
       </footer>
     </motion.div>

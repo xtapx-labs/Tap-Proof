@@ -65,7 +65,7 @@ function analyzeVelocity(recentScans) {
 // Detects physically impossible location changes
 function analyzeGeography(currentIP, lastScan) {
   // In a production system, we'd geolocate the IPs and calculate
-  // travel time vs elapsed time. For the hackathon, we flag if IPs differ
+  // travel time vs elapsed time. Here, we flag if IPs differ
   // significantly within a short window.
   if (!lastScan || !lastScan.ip_address || !currentIP) {
     return { status: 'normal', detail: 'no_geographic_data' };

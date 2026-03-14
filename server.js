@@ -6,11 +6,11 @@ const express = require('express');
 const cors    = require('cors');
 const path    = require('path');
 
-const verifyRoutes   = require('./src/routes/verify');
-const registerRoutes = require('./src/routes/register');
-const claimRoutes    = require('./src/routes/claim');
-const transferRoutes = require('./src/routes/transfer');
-const historyRoutes  = require('./src/routes/history');
+const verifyRoutes   = require('./server/routes/verify');
+const registerRoutes = require('./server/routes/register');
+const claimRoutes    = require('./server/routes/claim');
+const transferRoutes = require('./server/routes/transfer');
+const historyRoutes  = require('./server/routes/history');
 
 const app  = express();
 const PORT = process.env.PORT || 5000;
@@ -40,7 +40,7 @@ app.listen(PORT, () => {
   console.log(`\n  ╔══════════════════════════════════════════╗`);
   console.log(`  ║   XtapX — Physical Misinformation        ║`);
   console.log(`  ║   Detection System                       ║`);
-  console.log(`  ║   CalgaryHacks 2026                      ║`);
+  console.log(`  ║   Cryptographic Verification             ║`);
   console.log(`  ╠══════════════════════════════════════════╣`);
   console.log(`  ║   Server running on port ${PORT}            ║`);
   console.log(`  ║   ${process.env.BASE_URL || `http://localhost:${PORT}`}                ║`);
