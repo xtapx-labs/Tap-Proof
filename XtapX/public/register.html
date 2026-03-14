@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>XtapX — Register Product</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+
+  <nav class="nav">
+    <a href="/" class="nav-brand">Xtap<span>X</span></a>
+    <ul class="nav-links">
+      <li><a href="/">Home</a></li>
+      <li><a href="#registered">Registered Tags</a></li>
+    </ul>
+  </nav>
+
+  <div class="container">
+
+    <h1 style="font-size: 28px; font-weight: 800; margin-bottom: 4px; margin-top: 20px;">Register a Product</h1>
+    <p style="color: var(--text-dim); font-size: 14px; margin-bottom: 28px;">Bind a digital identity to a physical product. This generates the cryptographic keys for the NFC tag.</p>
+
+    <!-- Registration Form -->
+    <div class="card">
+      <div class="section-title">Product Information</div>
+
+      <div class="form-group">
+        <label class="form-label">Tag UID *</label>
+        <input type="text" class="form-input" id="reg-uid" placeholder="e.g. 04A23B1C2D3E4F (7-byte hex)">
+        <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">The unique ID burned into the NFC chip at the factory. Read it from the tag.</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Product Name *</label>
+        <input type="text" class="form-input" id="reg-name" placeholder="e.g. Air Jordan 1 Retro High OG">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Brand *</label>
+        <input type="text" class="form-input" id="reg-brand" placeholder="e.g. Nike">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Product Image URL</label>
+        <input type="text" class="form-input" id="reg-image" placeholder="https://example.com/image.jpg">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">SKU</label>
+        <input type="text" class="form-input" id="reg-sku" placeholder="e.g. 555088-134">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Registered By</label>
+        <input type="text" class="form-input" id="reg-by" placeholder="e.g. nike@brand.com">
+      </div>
+
+      <button class="btn btn-primary" id="reg-submit" onclick="registerTag()">Register Product & Generate Keys</button>
+    </div>
+
+    <!-- Result -->
+    <div class="card" id="reg-result" style="display: none;">
+      <div class="section-title">Registration Successful</div>
+      <div id="reg-result-content"></div>
+    </div>
+
+    <!-- Registered Tags -->
+    <div id="registered" style="margin-top: 40px;">
+      <h2 style="font-size: 22px; font-weight: 800; margin-bottom: 16px;">Registered Products</h2>
+      <div id="tags-list">
+        <div class="loading-screen" style="padding: 30px;">
+          <div class="spinner"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer class="footer">
+    <p><span class="footer-brand">XtapX Labs</span> · CalgaryHacks 2026</p>
+  </footer>
+
+  <script src="/js/common.js"></script>
+  <script>
+    // ── Register tag ────────────────────────
+    async function registerTag() {
+      const uid   = document.getElementById('reg-uid').value.trim();
+      const name  = document.getElementById('reg-name').value.trim();
+      const brand = document.getElementById('reg-brand').value.trim();
+      const image = document.getElementById('reg-image').value.trim();
+      const sku   = document.getElementById('reg-sku').value.trim();
+      const by    = document.getElementById('reg-by').value.trim();
+
+      if (!uid || !name || !brand) {
+        return showToast('UID, Product Name, and Brand are required', 'error');
+      }
+
+      document.getElementById('reg-submit').disabled = true;
+      document.getElementById('reg-submit').textContent = 'Registering...';
+
+      try {
+        const data = await api('/api/register', {
+          method: 'POST',
+          body: {
+            uid,
+            product_name:  name,
+            product_brand: brand,
+            product_image: image || undefined,
+            product_sku:   sku || undefined,
+            registered_by: by || undefined,
+          },
+        });
+
+        if (data.success) {
+          showToast('Product registered!', 'success');
+          showRegistrationResult(data);
+          loadTags();
+
+          // Clear form
+          ['reg-uid', 'reg-name', 'reg-brand', 'reg-image', 'reg-sku', 'reg-by']
+            .forEach(id => document.getElementById(id).value = '');
+        } else {
+          showToast(data.error || 'Registration failed', 'error');
+        }
+      } catch (err) {
+        showToast('Registration failed', 'error');
+      } finally {
+        document.getElementById('reg-submit').disabled = false;
+        document.getElementById('reg-submit').textContent = 'Register Product & Generate Keys';
+      }
+    }
+
+    function showRegistrationResult(data) {
+      const resultDiv = document.getElementById('reg-result');
+      const content   = document.getElementById('reg-result-content');
+
+      resultDiv.style.display = 'block';
+      content.innerHTML = `
+        <div class="deed-row">
+          <span class="deed-label">Tag UID</span>
+          <span class="deed-value">${data.tag.uid}</span>
+        </div>
+        <div class="deed-row">
+          <span class="deed-label">Product</span>
+          <span class="deed-value" style="font-family: var(--font);">${data.tag.product_name}</span>
+        </div>
+        <div class="deed-row">
+          <span class="deed-label">Registered At</span>
+          <span class="deed-value">${formatDate(data.tag.registered_at)}</span>
+        </div>
+
+        <div class="warning-box caution" style="margin-top: 16px;">
+          <h4>🔑 Cryptographic Keys — Save These Now</h4>
+          <p>These keys must be programmed into the NTAG 424 DNA chip. They will <strong>not</strong> be shown again.</p>
+        </div>
+
+        <div class="card-elevated" style="margin-top: 12px; font-family: var(--mono); font-size: 13px;">
+          <div class="deed-row">
+            <span class="deed-label">PICC Key</span>
+            <span class="deed-value" style="word-break: break-all;">${data.keys.picc_key}</span>
+          </div>
+          <div class="deed-row">
+            <span class="deed-label">CMAC Key</span>
+            <span class="deed-value" style="word-break: break-all;">${data.keys.cmac_key}</span>
+          </div>
+        </div>
+
+        <div style="margin-top: 12px; font-size: 12px; color: var(--text-muted);">
+          <strong>NFC URL Template:</strong><br>
+          <code style="color: var(--accent);">${data.nfc_url_template}</code>
+        </div>
+      `;
+
+      resultDiv.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // ── Load registered tags ────────────────
+    async function loadTags() {
+      try {
+        const data = await api('/api/tags');
+        const container = document.getElementById('tags-list');
+
+        if (!data.tags || data.tags.length === 0) {
+          container.innerHTML = '<p style="color: var(--text-dim); font-size: 14px;">No products registered yet.</p>';
+          return;
+        }
+
+        container.innerHTML = data.tags.map(tag => `
+          <div class="card" style="cursor: pointer;" onclick="window.location.href='/history?uid=${tag.uid}'">
+            <div style="display: flex; justify-content: space-between; align-items: start;">
+              <div>
+                <div style="font-weight: 700; font-size: 15px;">${tag.product_name}</div>
+                <div style="font-size: 13px; color: var(--accent);">${tag.product_brand}</div>
+                <div style="font-size: 11px; color: var(--text-muted); font-family: var(--mono); margin-top: 4px;">UID: ${tag.uid}</div>
+              </div>
+              <div style="text-align: right;">
+                ${resultBadge(tag.status === 'flagged' ? 'suspicious' : 'authentic')}
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">${tag.total_scans} scans</div>
+              </div>
+            </div>
+          </div>`).join('');
+      } catch (err) {
+        console.error('Failed to load tags:', err);
+      }
+    }
+
+    // ── Init ────────────────────────────────
+    loadTags();
+  </script>
+
+</body>
+</html>

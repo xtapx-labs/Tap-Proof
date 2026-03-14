@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>XtapX — Digital Title Deed</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+
+  <!-- ── Navigation ──────────────────────── -->
+  <nav class="nav">
+    <a href="/" class="nav-brand">Xtap<span>X</span></a>
+    <ul class="nav-links">
+      <li><a href="/">Home</a></li>
+      <li><a href="/register">Register</a></li>
+    </ul>
+  </nav>
+
+  <div class="container" id="app">
+    <!-- Populated by JS -->
+    <div class="loading-screen">
+      <div class="spinner"></div>
+      <p>Verifying cryptographic signature...</p>
+    </div>
+  </div>
+
+  <!-- ── Claim Modal ─────────────────────── -->
+  <div class="modal-overlay" id="claim-modal">
+    <div class="modal">
+      <h3>Claim This Product</h3>
+      <p>Register yourself as the owner. This will be recorded in the provenance chain.</p>
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input type="email" class="form-input" id="claim-email" placeholder="you@email.com">
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-outline" onclick="closeModal('claim-modal')">Cancel</button>
+        <button class="btn btn-success" onclick="submitClaim()">Claim Ownership</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Transfer Modal ──────────────────── -->
+  <div class="modal-overlay" id="transfer-modal">
+    <div class="modal">
+      <h3>Transfer Ownership</h3>
+      <p>Transfer this product to a new owner. They must tap the product after you initiate the transfer.</p>
+      <div class="form-group">
+        <label class="form-label">Your Email (current owner)</label>
+        <input type="email" class="form-input" id="transfer-from" placeholder="you@email.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">New Owner's Email</label>
+        <input type="email" class="form-input" id="transfer-to" placeholder="buyer@email.com">
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-outline" onclick="closeModal('transfer-modal')">Cancel</button>
+        <button class="btn btn-primary" onclick="submitTransfer()">Initiate Transfer</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <p><span class="footer-brand">XtapX Labs</span> · CalgaryHacks 2026</p>
+  </footer>
+
+  <script src="/js/common.js"></script>
+  <script>
+    let currentUID = null;
+
+    // ── Initialize ──────────────────────────
+    async function init() {
+      const params = getParams();
+      const { result, reason, uid } = params;
+
+      if (!result) {
+        renderError('No verification data', 'This page is opened by tapping an NFC-tagged product.');
+        return;
+      }
+
+      currentUID = uid;
+
+      if (result === 'counterfeit') {
+        renderCounterfeit(reason);
+        return;
+      }
+
+      if (result === 'error') {
+        renderError('Verification Error', reason || 'An unexpected error occurred during verification.');
+        return;
+      }
+
+      // Authentic or suspicious — fetch full details
+      if (uid) {
+        try {
+          const data = await api(`/verify/lookup/${uid}`);
+          if (result === 'suspicious') {
+            renderSuspicious(data, reason);
+          } else {
+            renderAuthentic(data);
+          }
+        } catch (err) {
+          renderError('Lookup Failed', 'Could not retrieve product details.');
+        }
+      } else {
+        renderError('Missing Data', 'No product UID in verification response.');
+      }
+    }
+
+    // ── Render: AUTHENTIC ───────────────────
+    function renderAuthentic(data) {
+      const p = data.product || {};
+      const app = document.getElementById('app');
+
+      app.innerHTML = `
+        <!-- Result Banner -->
+        <div class="result-banner authentic">
+          <div class="result-icon">✅</div>
+          <div class="result-title">VERIFIED AUTHENTIC</div>
+          <div class="result-subtitle">Cryptographic proof validated</div>
+        </div>
+
+        <!-- Product Card -->
+        <div class="product-card">
+          <div class="product-image">
+            ${p.image ? `<img src="${p.image}" alt="${p.name}">` : '📦'}
+          </div>
+          <div class="product-info">
+            <h2>${p.name || 'Unknown Product'}</h2>
+            <div class="brand">${p.brand || 'Unknown Brand'}</div>
+            ${p.sku ? `<div class="sku">SKU: ${p.sku}</div>` : ''}
+          </div>
+        </div>
+
+        <!-- Digital Title Deed -->
+        <div class="card">
+          <div class="section-title">Digital Title Deed</div>
+          <div class="deed-row">
+            <span class="deed-label">Scan #</span>
+            <span class="deed-value">${data.total_scans || '—'}</span>
+          </div>
+          <div class="deed-row">
+            <span class="deed-label">Timestamp</span>
+            <span class="deed-value">${formatDate(new Date().toISOString())}</span>
+          </div>
+          <div class="deed-row">
+            <span class="deed-label">Signature</span>
+            <span class="deed-value valid">Valid ✓</span>
+          </div>
+          <div class="deed-row">
+            <span class="deed-label">Counter</span>
+            <span class="deed-value valid">${data.last_counter || '—'}</span>
+          </div>
+          <div class="deed-row">
+            <span class="deed-label">Status</span>
+            <span class="deed-value">${resultBadge('authentic')}</span>
+          </div>
+          <div class="deed-row">
+            <span class="deed-label">Current Owner</span>
+            <span class="deed-value">${data.current_owner ? maskEmail(data.current_owner) : 'Unclaimed'}</span>
+          </div>
+        </div>
+
+        <!-- Provenance Chain -->
+        <div class="card">
+          <div class="section-title">Provenance Chain</div>
+          <div class="provenance-chain">
+            ${renderProvenance(data.provenance)}
+          </div>
+        </div>
+
+        <!-- Info Box -->
+        <div class="info-box">
+          <p>You are viewing <strong>mathematically verified</strong> information about this product. The cryptographic signature has been validated against a hardware-secured key. Make your decision with confidence.</p>
+        </div>
+
+        <!-- Actions -->
+        <div class="btn-group">
+          ${!data.current_owner
+            ? '<button class="btn btn-success" onclick="openModal(\'claim-modal\')">Claim This Product</button>'
+            : '<button class="btn btn-primary" onclick="openModal(\'transfer-modal\')">Transfer Ownership</button>'
+          }
+          <a href="/history?uid=${currentUID}" class="btn btn-outline">Full History</a>
+        </div>
+      `;
+    }
+
+    // ── Render: COUNTERFEIT ─────────────────
+    function renderCounterfeit(reason) {
+      const reasonText = {
+        unknown_tag:        'This tag is not registered in the XtapX system.',
+        invalid_signature:  'The cryptographic signature does not match.',
+        stale_counter:      'The counter value has been seen before (replay attempt).',
+        clone_detected:     'Counter regression detected — this is a hardware clone.',
+        missing_parameters: 'The URL is missing required cryptographic data.',
+      };
+
+      const app = document.getElementById('app');
+      app.innerHTML = `
+        <div class="result-banner counterfeit">
+          <div class="result-icon">❌</div>
+          <div class="result-title">VERIFICATION FAILED</div>
+          <div class="result-subtitle">This product failed cryptographic verification</div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">Rejection Details</div>
+          <div class="deed-row">
+            <span class="deed-label">Reason</span>
+            <span class="deed-value invalid">${reason || 'Unknown'}</span>
+          </div>
+          <div class="deed-row">
+            <span class="deed-label">Explanation</span>
+            <span class="deed-value" style="font-family: var(--font); font-size: 13px; text-align: right; max-width: 60%;">${reasonText[reason] || 'The verification data is invalid.'}</span>
+          </div>
+        </div>
+
+        <div class="warning-box">
+          <h4>⚠️ Physical Misinformation Detected</h4>
+          <p>The object you are holding does not carry valid proof of authenticity. This may be a counterfeit product designed to deceive. <strong>DO NOT</strong> complete a transaction based on unverified information.</p>
+        </div>
+
+        <div class="btn-group" style="margin-top: 24px;">
+          <a href="/" class="btn btn-outline">Back to Home</a>
+        </div>
+      `;
+    }
+
+    // ── Render: SUSPICIOUS ─────────────────
+    function renderSuspicious(data, reason) {
+      const p = data.product || {};
+      const app = document.getElementById('app');
+
+      app.innerHTML = `
+        <div class="result-banner suspicious">
+          <div class="result-icon">⚠️</div>
+          <div class="result-title">SIGNATURE VALID — ANOMALIES DETECTED</div>
+          <div class="result-subtitle">Review the details below before making a decision</div>
+        </div>
+
+        <div class="product-card">
+          <div class="product-image">
+            ${p.image ? `<img src="${p.image}" alt="${p.name}">` : '📦'}
+          </div>
+          <div class="product-info">
+            <h2>${p.name || 'Unknown Product'}</h2>
+            <div class="brand">${p.brand || 'Unknown Brand'}</div>
+            ${p.sku ? `<div class="sku">SKU: ${p.sku}</div>` : ''}
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">Digital Title Deed</div>
+          <div class="deed-row">
+            <span class="deed-label">Signature</span>
+            <span class="deed-value valid">Valid ✓</span>
+          </div>
+          <div class="deed-row">
+            <span class="deed-label">Status</span>
+            <span class="deed-value">${resultBadge('suspicious')}</span>
+          </div>
+          <div class="deed-row">
+            <span class="deed-label">Flags</span>
+            <span class="deed-value warning" style="font-family: var(--font); font-size: 12px; text-align: right; max-width: 60%;">${reason || 'Anomaly detected'}</span>
+          </div>
+        </div>
+
+        <div class="warning-box caution">
+          <h4>⚠️ Exercise Caution</h4>
+          <p>This product's cryptographic signature is valid, but its scan pattern shows anomalies. Review the provenance chain and scan history before making a decision.</p>
+        </div>
+
+        <div class="card" style="margin-top: 16px;">
+          <div class="section-title">Provenance Chain</div>
+          <div class="provenance-chain">
+            ${renderProvenance(data.provenance)}
+          </div>
+        </div>
+
+        <div class="btn-group">
+          <a href="/history?uid=${currentUID}" class="btn btn-outline">Full History</a>
+          <a href="/" class="btn btn-outline">Back to Home</a>
+        </div>
+      `;
+    }
+
+    // ── Render: ERROR ───────────────────────
+    function renderError(title, message) {
+      const app = document.getElementById('app');
+      app.innerHTML = `
+        <div class="result-banner error">
+          <div class="result-icon">⚙️</div>
+          <div class="result-title">${title}</div>
+          <div class="result-subtitle">${message}</div>
+        </div>
+        <div class="btn-group">
+          <a href="/" class="btn btn-outline">Back to Home</a>
+        </div>
+      `;
+    }
+
+    // ── Render provenance chain ─────────────
+    function renderProvenance(provenance) {
+      if (!provenance || provenance.length === 0) {
+        return '<p style="color: var(--text-dim); font-size: 13px;">No provenance data yet.</p>';
+      }
+      return provenance.map((p, i) => {
+        const isLast = i === provenance.length - 1;
+        const actionLabels = {
+          registered:  '📋 Registered',
+          claimed:     '🤝 Claimed',
+          transferred: '🔄 Transferred',
+          released:    '📤 Released',
+        };
+        return `
+          <div class="provenance-event ${isLast ? 'current' : ''}">
+            <div class="provenance-date">${formatDateShort(p.date)}</div>
+            <div class="provenance-action">${actionLabels[p.action] || p.action}</div>
+            <div class="provenance-actor">${maskEmail(p.actor || p.owner)}</div>
+            <div class="provenance-counter">counter: ${p.counter}</div>
+          </div>`;
+      }).join('');
+    }
+
+    // ── Claim ownership ─────────────────────
+    async function submitClaim() {
+      const email = document.getElementById('claim-email').value.trim();
+      if (!email) return showToast('Enter your email', 'error');
+
+      try {
+        const data = await api('/api/claim', {
+          method: 'POST',
+          body: { tag_uid: currentUID, email },
+        });
+
+        if (data.success) {
+          showToast('Ownership claimed!', 'success');
+          closeModal('claim-modal');
+          setTimeout(() => location.reload(), 1000);
+        } else {
+          showToast(data.error || data.message || 'Claim failed', 'error');
+        }
+      } catch (err) {
+        showToast('Claim failed', 'error');
+      }
+    }
+
+    // ── Transfer ownership ──────────────────
+    async function submitTransfer() {
+      const from = document.getElementById('transfer-from').value.trim();
+      const to   = document.getElementById('transfer-to').value.trim();
+      if (!from || !to) return showToast('Fill in both email fields', 'error');
+
+      try {
+        const data = await api('/api/transfer', {
+          method: 'POST',
+          body: { tag_uid: currentUID, from_email: from, to_email: to },
+        });
+
+        if (data.success) {
+          showToast('Transfer initiated! Token: ' + data.transfer_token, 'success');
+          closeModal('transfer-modal');
+        } else {
+          showToast(data.error || data.message || 'Transfer failed', 'error');
+        }
+      } catch (err) {
+        showToast('Transfer failed', 'error');
+      }
+    }
+
+    // ── Boot ────────────────────────────────
+    init();
+  </script>
+
+</body>
+</html>
